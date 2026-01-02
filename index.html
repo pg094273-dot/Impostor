@@ -393,6 +393,19 @@
       border: 1px solid rgba(40,224,169,0.3);
     }
     
+    .category-display {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-align: center;
+      margin: 10px 0 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(40,224,169,0.3);
+      display: inline-block;
+    }
+    
     @media (min-height: 780px) {
       .app { 
         padding-top: 20px; 
@@ -443,8 +456,7 @@
     STORAGE_KEY: "impostor-web-opts-v3",
     MIN_PLAYERS: 3,
     MAX_PLAYERS: 24,
-    DEFAULT_PLAYERS: 5,
-    DEFAULT_CATEGORY: "Comida"
+    DEFAULT_PLAYERS: 5
   };
 
   // Cada palabra tiene una palabra relacionada como pista para el impostor
@@ -593,7 +605,7 @@
   const GameState = {
     screen: "menu",
     numPlayers: CONFIG.DEFAULT_PLAYERS,
-    category: CONFIG.DEFAULT_CATEGORY,
+    category: null,
     playerNames: [],
     secretWord: null,
     hintWord: null,
@@ -603,7 +615,8 @@
     roundNumber: 1,
     
     reset() {
-      this.screen = "setup";
+      this.screen = "setup_names";
+      this.category = null;
       this.playerNames = [];
       this.secretWord = null;
       this.hintWord = null;
@@ -614,9 +627,14 @@
     },
     
     startNewGame() {
+      // Seleccionar categoría aleatoria
+      const categoryKeys = Object.keys(WORD_CATEGORIES);
+      this.category = Utils.pickRandom(categoryKeys);
+      
+      // Seleccionar palabra aleatoria de esa categoría
       const words = WORD_CATEGORIES[this.category] || [];
       if (words.length === 0) {
-        console.error('No hay palabras disponibles para esta categoría');
+        console.error('No hay palabras disponibles');
         return false;
       }
       
@@ -673,8 +691,7 @@
     save() {
       try {
         const data = {
-          numPlayers: GameState.numPlayers,
-          category: GameState.category
+          numPlayers: GameState.numPlayers
         };
         localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data));
         return true;
@@ -697,10 +714,6 @@
             CONFIG.MIN_PLAYERS, 
             CONFIG.MAX_PLAYERS
           );
-        }
-        
-        if (data.category && WORD_CATEGORIES[data.category]) {
-          GameState.category = data.category;
         }
         
         return true;
@@ -843,7 +856,7 @@
       content.innerHTML = `
         <h2 class="center">¿Listos para encontrar al impostor?</h2>
         <p class="center muted">
-          Compartid un solo dispositivo, mirad vuestro rol por turnos y usad pistas de una palabra para descubrir quién está fingiendo.
+          En cada partida se seleccionará aleatoriamente una categoría y una palabra secreta. Compartid el dispositivo y descubrid quién está fingiendo.
         </p>
       `;
       
@@ -862,37 +875,20 @@
         'menuPlayers'
       );
       
-      const categorySelect = document.createElement('select');
-      categorySelect.setAttribute('aria-label', 'Seleccionar categoría de palabras');
-      
-      Object.keys(WORD_CATEGORIES).forEach(cat => {
-        const option = Utils.createElement('option', '', {
-          value: cat,
-          textContent: cat
-        });
-        if (cat === GameState.category) {
-          option.selected = true;
-        }
-        categorySelect.appendChild(option);
-      });
-      
-      const categoryField = Components.createField(
-        'Categoría de palabras',
-        categorySelect,
-        'menuCat'
-      );
-      
       content.appendChild(playersField);
-      content.appendChild(categoryField);
       
       const info = Utils.createElement('p', 'muted', {
-        textContent: 'Todos verán la misma palabra secreta, excepto el impostor que recibirá una palabra relacionada como pista.'
+        innerHTML: `
+          <strong>Categorías disponibles:</strong> Comida, Lugares, Objetos, Animales, Profesiones.<br>
+          <strong>Total de palabras:</strong> 125 palabras diferentes.<br><br>
+          La categoría y palabra se elegirán automáticamente al comenzar.
+        `
       });
       content.appendChild(info);
       
       const card = Components.createCard({
         title: 'Bienvenido',
-        chip: 'Party · Local',
+        chip: 'Aleatorio · Local',
         content: content
       });
       
@@ -900,14 +896,9 @@
       
       const playBtn = Components.createButton('Configurar partida', () => {
         const n = parseInt(playersInput.value, 10);
-        const cat = categorySelect.value;
         
         GameState.numPlayers = isNaN(n) ? CONFIG.DEFAULT_PLAYERS : 
           Utils.clamp(n, CONFIG.MIN_PLAYERS, CONFIG.MAX_PLAYERS);
-        
-        if (WORD_CATEGORIES[cat]) {
-          GameState.category = cat;
-        }
         
         Storage.save();
         GameState.screen = "setup_names";
@@ -956,7 +947,10 @@
       content.appendChild(grid);
       
       const tip = Utils.createElement('p', 'muted center', {
-        textContent: 'Si no introduces nombres, se usará "Jugador 1", "Jugador 2", etc.',
+        innerHTML: `
+          Si no introduces nombres, se usará "Jugador 1", "Jugador 2", etc.<br><br>
+          <strong>🎲 La categoría y palabra se elegirán aleatoriamente al empezar.</strong>
+        `,
         style: 'margin-top: 12px;'
       });
       content.appendChild(tip);
@@ -980,7 +974,7 @@
         if (GameState.startNewGame()) {
           Renderer.render();
         }
-      }, { ariaLabel: 'Empezar la partida' });
+      }, { ariaLabel: 'Empezar la partida con categoría aleatoria' });
       
       const backBtn = Components.createButton('Volver', () => {
         GameState.screen = "menu";
@@ -1009,6 +1003,9 @@
         <p class="muted">
           Que nadie más mire la pantalla. Cuando esté listo, que toque el botón para ver su rol secreto.
         </p>
+        <div class="center">
+          <span class="category-display">📂 ${Utils.sanitizeHTML(GameState.category)}</span>
+        </div>
       `;
       
       const steps = Components.createSteps(0);
@@ -1107,6 +1104,9 @@
       const content = document.createElement('div');
       content.className = 'center';
       content.innerHTML = `
+        <div class="center" style="margin-bottom: 12px;">
+          <span class="category-display">📂 ${Utils.sanitizeHTML(GameState.category)}</span>
+        </div>
         <h2>Es vuestro turno de hablar</h2>
         <p class="muted">
           Uno por uno, cada jugador dice <strong>una palabra</strong> relacionada con la palabra secreta, pero sin decirla exacta.
@@ -1238,6 +1238,9 @@
       content.innerHTML = `
         <h2>${title}</h2>
         <p class="muted">${subtitle}</p>
+        <div class="center" style="margin: 12px 0;">
+          <span class="category-display">📂 ${Utils.sanitizeHTML(GameState.category)}</span>
+        </div>
         <div class="word" role="status" aria-live="polite">
           Palabra secreta: ${Utils.sanitizeHTML(GameState.secretWord)}
         </div>
@@ -1251,7 +1254,7 @@
           Voto del grupo: ${votedName ? Utils.sanitizeHTML(votedName) : "sin voto marcado"}
         </p>
         <div class="badges">
-          <span class="badge">Probad cambiar de categoría para la siguiente partida.</span>
+          <span class="badge">La próxima partida tendrá otra categoría y palabra aleatorias.</span>
           <span class="badge">Sumad puntos: +1 para el equipo ganador en cada ronda.</span>
         </div>
       `;
@@ -1265,11 +1268,11 @@
       
       const btnRow = Utils.createElement('div', 'btn-row');
       
-      const againBtn = Components.createButton('Nueva partida', () => {
+      const againBtn = Components.createButton('Nueva partida aleatoria', () => {
         if (GameState.startNewGame()) {
           Renderer.render();
         }
-      }, { ariaLabel: 'Comenzar una nueva partida con los mismos jugadores' });
+      }, { ariaLabel: 'Comenzar una nueva partida con categoría y palabra aleatorias' });
       
       const menuBtn = Components.createButton('Volver al menú', () => {
         GameState.reset();
