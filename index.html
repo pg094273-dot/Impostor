@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Impostor - Juego de Palabras</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Juego social de deducción y palabra secreta para 3-12 jugadores">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050816;
+      --bg-alt: #0b1020;
+      --accent: #28e0a9;
+      --accent-soft: rgba(40,224,169,0.15);
+      --danger: #ff4b6a;
+      --text: #f5f5f5;
+      --muted: #a0a4b8;
+      --card: #11172a;
+      --border: #22263a;
+      --radius: 14px;
+      --shadow-soft: 0 18px 45px rgba(0,0,0,0.45);
+      --shadow-inner: inset 0 0 0 1px rgba(255,255,255,0.03);
+      --transition: 0.2s ease;
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      background: radial-gradient(circle at top, #122149 0, #050816 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+    
+    .app {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 8px;
+      text-decoration: none;
+      z-index: 100;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    header {
+      text-align: center;
+      padding: 8px 8px 4px;
+    }
+    
+    header h1 {
+      margin: 6px 0;
+      font-size: 1.4rem;
+      letter-spacing: 0.04em;
+    }
+    
+    header p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+    
+    .card {
+      background: linear-gradient(145deg, #11172a, #090d1a);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft), var(--shadow-inner);
+      padding: 18px 16px 16px;
+      border: 1px solid var(--border);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .card-title {
+      font-size: 0.95rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    
+    .chip {
+      font-size: 0.75rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(40,224,169,0.5);
+    }
+    
+    .chip-imp {
+      background: rgba(255,75,106,0.18);
+      color: var(--danger);
+      border-color: rgba(255,75,106,0.7);
+    }
+    
+    h2 {
+      margin: 8px 0 6px;
+      font-size: 1.1rem;
+    }
+    
+    p {
+      margin: 6px 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    .muted {
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+    
+    .center {
+      text-align: center;
+    }
+    
+    .word {
+      font-size: 1.6rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.04em;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px dashed rgba(255,255,255,0.18);
+      background: radial-gradient(circle at top, rgba(40,224,169,0.12), transparent 55%);
+      margin: 8px 0 6px;
+    }
+    
+    .word-secret {
+      letter-spacing: 0.18em;
+      font-size: 1.15rem;
+    }
+    
+    .word-hint {
+      font-size: 1.3rem;
+      color: var(--danger);
+      border-color: rgba(255,75,106,0.4);
+      background: radial-gradient(circle at top, rgba(255,75,106,0.12), transparent 55%);
+    }
+    
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #050816;
+      background: linear-gradient(135deg, #28e0a9, #7bf7e0);
+      box-shadow: 0 12px 24px rgba(40,224,169,0.35);
+      width: 100%;
+      transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+    }
+    
+    button:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+    
+    button:active:not(:disabled) {
+      transform: translateY(1px) scale(0.985);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+    }
+    
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    button.secondary {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: none;
+      text-transform: none;
+      letter-spacing: 0.03em;
+      font-weight: 500;
+    }
+    
+    button.danger {
+      background: linear-gradient(135deg, #ff4b6a, #ff8ba1);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(255,75,106,0.45);
+    }
+    
+    .field {
+      margin: 8px 0 4px;
+    }
+    
+    .field label {
+      display: block;
+      font-size: 0.83rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(3,6,18,0.9);
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent);
+    }
+    
+    .field input:invalid {
+      border-color: var(--danger);
+    }
+    
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    
+    .badge {
+      font-size: 0.78rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      color: var(--muted);
+    }
+    
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .players-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .player-pill {
+      position: relative;
+      padding: 9px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      background: linear-gradient(145deg, rgba(12,16,40,0.9), rgba(6,10,24,0.95));
+      cursor: pointer;
+      color: var(--muted);
+      transition: all var(--transition);
+      text-align: center;
+    }
+    
+    .player-pill:hover {
+      transform: scale(1.05);
+    }
+    
+    .player-pill:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    
+    .player-pill .player-number {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.75rem;
+    }
+    
+    .player-pill .player-name {
+      font-weight: 600;
+      color: #fff;
+      font-size: 0.85rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .player-pill.selected {
+      border-color: rgba(255,75,106,0.9);
+      box-shadow: 0 0 0 1px rgba(255,75,106,0.65);
+      background: linear-gradient(145deg, rgba(255,75,106,0.15), rgba(255,75,106,0.05));
+    }
+    
+    .player-pill.selected .player-name {
+      color: #ffd7de;
+    }
+    
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      transition: all var(--transition);
+    }
+    
+    .dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(40,224,169,0.9);
+    }
+    
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 6px 0 2px;
+    }
+    
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    .player-name-display {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(40,224,169,0.3);
+    }
+    
+    @media (min-height: 780px) {
+      .app { 
+        padding-top: 20px; 
+        padding-bottom: 18px; 
+      }
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .card {
+      animation: fadeIn 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Saltar al contenido principal</a>
+  
+  <div class="app">
+    <header role="banner">
+      <h1>IMPOSTOR · WEB</h1>
+      <p>Juego social de palabra secreta, deducción y engaño</p>
+    </header>
+
+    <main id="main" role="main"></main>
+
+    <footer role="contentinfo">
+      Modo local "pasar el móvil". Pensado para 3‑12 personas.
+    </footer>
+  </div>
+
+<script>
+  'use strict';
+
+  // =========================
+  // Configuración y constantes
+  // =========================
+
+  const CONFIG = {
+    STORAGE_KEY: "impostor-web-opts-v3",
+    MIN_PLAYERS: 3,
+    MAX_PLAYERS: 24,
+    DEFAULT_PLAYERS: 5,
+    DEFAULT_CATEGORY: "Comida"
+  };
+
+  // Cada palabra tiene una palabra relacionada como pista para el impostor
+  const WORD_CATEGORIES = {
+    "Comida": [
+      {word: "PIZZA", hint: "PASTA"},
+      {word: "HAMBURGUESA", hint: "BOCADILLO"},
+      {word: "ENSALADA", hint: "VERDURA"},
+      {word: "SUSHI", hint: "ARROZ"},
+      {word: "PAELLA", hint: "FIDEUÁ"},
+      {word: "TORTILLA", hint: "HUEVO"},
+      {word: "CHOCOLATE", hint: "CACAO"},
+      {word: "HELADO", hint: "POSTRE"},
+      {word: "CAFÉ", hint: "BEBIDA"},
+      {word: "TARTA", hint: "DULCE"},
+      {word: "PASTA", hint: "ESPAGUETI"},
+      {word: "QUESO", hint: "LÁCTEO"},
+      {word: "JAMÓN", hint: "EMBUTIDO"},
+      {word: "PAN", hint: "HARINA"},
+      {word: "ARROZ", hint: "CEREAL"},
+      {word: "PESCADO", hint: "MERLUZA"},
+      {word: "CARNE", hint: "FILETE"},
+      {word: "FRUTA", hint: "MANZANA"},
+      {word: "VERDURA", hint: "LECHUGA"},
+      {word: "SOPA", hint: "CALDO"},
+      {word: "BOCADILLO", hint: "SANDWICH"},
+      {word: "GALLETA", hint: "BIZCOCHO"},
+      {word: "YOGUR", hint: "LECHE"},
+      {word: "ZUMO", hint: "NARANJA"},
+      {word: "MIEL", hint: "AZÚCAR"}
+    ],
+    "Lugares": [
+      {word: "PLAYA", hint: "COSTA"},
+      {word: "MONTAÑA", hint: "SIERRA"},
+      {word: "COLEGIO", hint: "ESCUELA"},
+      {word: "OFICINA", hint: "TRABAJO"},
+      {word: "RESTAURANTE", hint: "BAR"},
+      {word: "AEROPUERTO", hint: "TERMINAL"},
+      {word: "MUSEO", hint: "GALERÍA"},
+      {word: "HOSPITAL", hint: "CLÍNICA"},
+      {word: "PARQUE", hint: "JARDÍN"},
+      {word: "SUPERMERCADO", hint: "TIENDA"},
+      {word: "CINE", hint: "TEATRO"},
+      {word: "BIBLIOTECA", hint: "LIBRERÍA"},
+      {word: "GIMNASIO", hint: "POLIDEPORTIVO"},
+      {word: "PISCINA", hint: "BALNEARIO"},
+      {word: "ESTADIO", hint: "CAMPO"},
+      {word: "HOTEL", hint: "HOSTAL"},
+      {word: "BANCO", hint: "CAJERO"},
+      {word: "FARMACIA", hint: "DROGUERÍA"},
+      {word: "IGLESIA", hint: "CATEDRAL"},
+      {word: "PLAZA", hint: "AVENIDA"},
+      {word: "MERCADO", hint: "MERCADILLO"},
+      {word: "PUERTO", hint: "MUELLE"},
+      {word: "ESTACIÓN", hint: "ANDÉN"},
+      {word: "UNIVERSIDAD", hint: "CAMPUS"},
+      {word: "ZOOLÓGICO", hint: "SAFARI"}
+    ],
+    "Objetos": [
+      {word: "MÓVIL", hint: "TELÉFONO"},
+      {word: "LLAVE", hint: "CERRADURA"},
+      {word: "LIBRO", hint: "REVISTA"},
+      {word: "GAFAS", hint: "LENTE"},
+      {word: "ORDENADOR", hint: "PANTALLA"},
+      {word: "SILLA", hint: "TABURETE"},
+      {word: "MESA", hint: "ESCRITORIO"},
+      {word: "RELOJ", hint: "CRONÓMETRO"},
+      {word: "AURICULARES", hint: "CASCOS"},
+      {word: "MOCHILA", hint: "BOLSO"},
+      {word: "LÁMPARA", hint: "LUZ"},
+      {word: "ESPEJO", hint: "CRISTAL"},
+      {word: "ALMOHADA", hint: "COJÍN"},
+      {word: "MANTA", hint: "COLCHA"},
+      {word: "PARAGUAS", hint: "IMPERMEABLE"},
+      {word: "BOTELLA", hint: "VASO"},
+      {word: "CUCHILLO", hint: "TENEDOR"},
+      {word: "PLATO", hint: "BANDEJA"},
+      {word: "CÁMARA", hint: "FOTO"},
+      {word: "TELEVISIÓN", hint: "MONITOR"},
+      {word: "RADIO", hint: "ALTAVOZ"},
+      {word: "CALCULADORA", hint: "ÁBACO"},
+      {word: "CALENDARIO", hint: "AGENDA"},
+      {word: "CARTERA", hint: "MONEDERO"},
+      {word: "LINTERNA", hint: "FOCO"}
+    ],
+    "Animales": [
+      {word: "PERRO", hint: "CACHORRO"},
+      {word: "GATO", hint: "FELINO"},
+      {word: "LEÓN", hint: "TIGRE"},
+      {word: "ELEFANTE", hint: "MAMUT"},
+      {word: "PEZ", hint: "PIRAÑA"},
+      {word: "PÁJARO", hint: "CANARIO"},
+      {word: "CABALLO", hint: "YEGUA"},
+      {word: "RANA", hint: "SAPO"},
+      {word: "OSO", hint: "PANDA"},
+      {word: "MONO", hint: "CHIMPANCÉ"},
+      {word: "VACA", hint: "TORO"},
+      {word: "OVEJA", hint: "CORDERO"},
+      {word: "CERDO", hint: "JABALÍ"},
+      {word: "CONEJO", hint: "LIEBRE"},
+      {word: "RATÓN", hint: "RATA"},
+      {word: "SERPIENTE", hint: "COBRA"},
+      {word: "COCODRILO", hint: "CAIMÁN"},
+      {word: "ÁGUILA", hint: "HALCÓN"},
+      {word: "TIBURÓN", hint: "BALLENA"},
+      {word: "DELFÍN", hint: "ORCA"},
+      {word: "MARIPOSA", hint: "POLILLA"},
+      {word: "HORMIGA", hint: "ABEJA"},
+      {word: "ARAÑA", hint: "ESCORPIÓN"},
+      {word: "TORTUGA", hint: "GALÁPAGO"},
+      {word: "PINGÜINO", hint: "FOCA"}
+    ],
+    "Profesiones": [
+      {word: "MÉDICO", hint: "ENFERMERO"},
+      {word: "PROFESOR", hint: "MAESTRO"},
+      {word: "COCINERO", hint: "CHEF"},
+      {word: "BOMBERO", hint: "RESCATISTA"},
+      {word: "POLICÍA", hint: "GUARDIA"},
+      {word: "ABOGADO", hint: "JUEZ"},
+      {word: "INGENIERO", hint: "ARQUITECTO"},
+      {word: "ARTISTA", hint: "PINTOR"},
+      {word: "MÚSICO", hint: "CANTANTE"},
+      {word: "DEPORTISTA", hint: "ATLETA"},
+      {word: "ACTOR", hint: "COMEDIANTE"},
+      {word: "ESCRITOR", hint: "PERIODISTA"},
+      {word: "FOTÓGRAFO", hint: "CAMARÓGRAFO"},
+      {word: "PILOTO", hint: "AZAFATA"},
+      {word: "CONDUCTOR", hint: "TAXISTA"},
+      {word: "AGRICULTOR", hint: "GANADERO"},
+      {word: "CARPINTERO", hint: "ALBAÑIL"},
+      {word: "ELECTRICISTA", hint: "FONTANERO"},
+      {word: "MECÁNICO", hint: "SOLDADOR"},
+      {word: "PELUQUERO", hint: "BARBERO"},
+      {word: "VENDEDOR", hint: "COMERCIANTE"},
+      {word: "BANQUERO", hint: "CONTADOR"},
+      {word: "CIENTÍFICO", hint: "QUÍMICO"},
+      {word: "VETERINARIO", hint: "BIÓLOGO"},
+      {word: "PROGRAMADOR", hint: "DISEÑADOR"}
+    ]
+  };
+
+  // ================
+  // Estado de juego
+  // ================
+
+  const GameState = {
+    screen: "menu",
+    numPlayers: CONFIG.DEFAULT_PLAYERS,
+    category: CONFIG.DEFAULT_CATEGORY,
+    playerNames: [],
+    secretWord: null,
+    hintWord: null,
+    impostorIndex: null,
+    currentRevealPlayer: 0,
+    votingSelectedIndex: null,
+    roundNumber: 1,
+    
+    reset() {
+      this.screen = "setup";
+      this.playerNames = [];
+      this.secretWord = null;
+      this.hintWord = null;
+      this.impostorIndex = null;
+      this.currentRevealPlayer = 0;
+      this.votingSelectedIndex = null;
+      this.roundNumber = 1;
+    },
+    
+    startNewGame() {
+      const words = WORD_CATEGORIES[this.category] || [];
+      if (words.length === 0) {
+        console.error('No hay palabras disponibles para esta categoría');
+        return false;
+      }
+      
+      const selectedWord = Utils.pickRandom(words);
+      this.secretWord = selectedWord.word;
+      this.hintWord = selectedWord.hint;
+      this.impostorIndex = Math.floor(Math.random() * this.numPlayers);
+      this.currentRevealPlayer = 0;
+      this.votingSelectedIndex = null;
+      this.roundNumber = 1;
+      this.screen = "reveal_intro";
+      return true;
+    }
+  };
+
+  // =========
+  // Utilidades
+  // =========
+
+  const Utils = {
+    pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    },
+    
+    clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    },
+    
+    sanitizeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    },
+    
+    createElement(tag, className, attributes = {}) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      Object.entries(attributes).forEach(([key, value]) => {
+        if (key === 'textContent' || key === 'innerHTML') {
+          element[key] = value;
+        } else {
+          element.setAttribute(key, value);
+        }
+      });
+      return element;
+    }
+  };
+
+  // ===================
+  // Gestión de Storage
+  // ===================
+
+  const Storage = {
+    save() {
+      try {
+        const data = {
+          numPlayers: GameState.numPlayers,
+          category: GameState.category
+        };
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data));
+        return true;
+      } catch (error) {
+        console.warn('No se pudo guardar en localStorage:', error);
+        return false;
+      }
+    },
+    
+    load() {
+      try {
+        const text = localStorage.getItem(CONFIG.STORAGE_KEY);
+        if (!text) return false;
+        
+        const data = JSON.parse(text);
+        
+        if (typeof data.numPlayers === "number") {
+          GameState.numPlayers = Utils.clamp(
+            data.numPlayers, 
+            CONFIG.MIN_PLAYERS, 
+            CONFIG.MAX_PLAYERS
+          );
+        }
+        
+        if (data.category && WORD_CATEGORIES[data.category]) {
+          GameState.category = data.category;
+        }
+        
+        return true;
+      } catch (error) {
+        console.warn('No se pudo cargar desde localStorage:', error);
+        return false;
+      }
+    }
+  };
+
+  // ===================
+  // Sistema de Render
+  // ===================
+
+  const Renderer = {
+    appRoot: null,
+    
+    init() {
+      this.appRoot = document.getElementById("main");
+      if (!this.appRoot) {
+        console.error('No se encontró el elemento #main');
+      }
+    },
+    
+    render() {
+      if (!this.appRoot) return;
+      
+      this.appRoot.innerHTML = "";
+      
+      const viewFn = Views[GameState.screen] || Views.menu;
+      const view = viewFn();
+      
+      if (view) {
+        this.appRoot.appendChild(view);
+      }
+    }
+  };
+
+  // ===================
+  // Componentes UI
+  // ===================
+
+  const Components = {
+    createCard(config = {}) {
+      const card = Utils.createElement('div', 'card');
+      
+      if (config.title || config.chip) {
+        const header = Utils.createElement('div', 'card-header');
+        
+        if (config.title) {
+          const title = Utils.createElement('div', 'card-title', {
+            textContent: config.title
+          });
+          header.appendChild(title);
+        }
+        
+        if (config.chip) {
+          const chipClass = config.chipType === 'impostor' ? 'chip chip-imp' : 'chip';
+          const chip = Utils.createElement('div', chipClass, {
+            textContent: config.chip
+          });
+          header.appendChild(chip);
+        }
+        
+        card.appendChild(header);
+      }
+      
+      if (config.content) {
+        if (typeof config.content === 'string') {
+          const content = document.createElement('div');
+          content.innerHTML = config.content;
+          card.appendChild(content);
+        } else {
+          card.appendChild(config.content);
+        }
+      }
+      
+      return card;
+    },
+    
+    createButton(text, onClick, options = {}) {
+      const className = options.secondary ? 'secondary' : 
+                       options.danger ? 'danger' : '';
+      
+      const button = Utils.createElement('button', className, {
+        textContent: text,
+        type: 'button',
+        'aria-label': options.ariaLabel || text
+      });
+      
+      if (options.disabled) {
+        button.disabled = true;
+      }
+      
+      if (onClick) {
+        button.addEventListener('click', onClick);
+      }
+      
+      return button;
+    },
+    
+    createField(label, inputElement, id) {
+      const field = Utils.createElement('div', 'field');
+      
+      const labelEl = Utils.createElement('label', '', {
+        textContent: label,
+        for: id
+      });
+      
+      inputElement.id = id;
+      
+      field.appendChild(labelEl);
+      field.appendChild(inputElement);
+      
+      return field;
+    },
+    
+    createSteps(activeStep = 0, totalSteps = 3) {
+      const container = Utils.createElement('div', 'steps');
+      
+      for (let i = 0; i < totalSteps; i++) {
+        const dot = Utils.createElement('div', i === activeStep ? 'dot active' : 'dot', {
+          'aria-label': `Paso ${i + 1} de ${totalSteps}`,
+          role: 'presentation'
+        });
+        container.appendChild(dot);
+      }
+      
+      return container;
+    }
+  };
+
+  // ===================
+  // Vistas
+  // ===================
+
+  const Views = {
+    menu() {
+      const content = document.createElement('div');
+      content.innerHTML = `
+        <h2 class="center">¿Listos para encontrar al impostor?</h2>
+        <p class="center muted">
+          Compartid un solo dispositivo, mirad vuestro rol por turnos y usad pistas de una palabra para descubrir quién está fingiendo.
+        </p>
+      `;
+      
+      const playersInput = Utils.createElement('input', '', {
+        type: 'number',
+        min: CONFIG.MIN_PLAYERS,
+        max: CONFIG.MAX_PLAYERS,
+        step: 1,
+        value: GameState.numPlayers,
+        'aria-required': 'true'
+      });
+      
+      const playersField = Components.createField(
+        'Número de jugadores',
+        playersInput,
+        'menuPlayers'
+      );
+      
+      const categorySelect = document.createElement('select');
+      categorySelect.setAttribute('aria-label', 'Seleccionar categoría de palabras');
+      
+      Object.keys(WORD_CATEGORIES).forEach(cat => {
+        const option = Utils.createElement('option', '', {
+          value: cat,
+          textContent: cat
+        });
+        if (cat === GameState.category) {
+          option.selected = true;
+        }
+        categorySelect.appendChild(option);
+      });
+      
+      const categoryField = Components.createField(
+        'Categoría de palabras',
+        categorySelect,
+        'menuCat'
+      );
+      
+      content.appendChild(playersField);
+      content.appendChild(categoryField);
+      
+      const info = Utils.createElement('p', 'muted', {
+        textContent: 'Todos verán la misma palabra secreta, excepto el impostor que recibirá una palabra relacionada como pista.'
+      });
+      content.appendChild(info);
+      
+      const card = Components.createCard({
+        title: 'Bienvenido',
+        chip: 'Party · Local',
+        content: content
+      });
+      
+      const btnRow = Utils.createElement('div', 'btn-row');
+      
+      const playBtn = Components.createButton('Configurar partida', () => {
+        const n = parseInt(playersInput.value, 10);
+        const cat = categorySelect.value;
+        
+        GameState.numPlayers = isNaN(n) ? CONFIG.DEFAULT_PLAYERS : 
+          Utils.clamp(n, CONFIG.MIN_PLAYERS, CONFIG.MAX_PLAYERS);
+        
+        if (WORD_CATEGORIES[cat]) {
+          GameState.category = cat;
+        }
+        
+        Storage.save();
+        GameState.screen = "setup_names";
+        Renderer.render();
+      }, { ariaLabel: 'Configurar nueva partida' });
+      
+      btnRow.appendChild(playBtn);
+      card.appendChild(btnRow);
+      
+      return card;
+    },
+    
+    setup_names() {
+      const content = document.createElement('div');
+      content.innerHTML = `
+        <h2 class="center">Introduce los nombres</h2>
+        <p class="muted center">
+          Opcional: podéis poner vuestros nombres para identificaros mejor durante la partida.
+        </p>
+      `;
+      
+      const grid = Utils.createElement('div', 'players-grid');
+      
+      for (let i = 0; i < GameState.numPlayers; i++) {
+        const input = Utils.createElement('input', '', {
+          type: 'text',
+          placeholder: `Jugador ${i + 1}`,
+          maxlength: 15,
+          'data-player': i,
+          'aria-label': `Nombre del jugador ${i + 1}`
+        });
+        
+        if (GameState.playerNames[i]) {
+          input.value = GameState.playerNames[i];
+        }
+        
+        const field = Components.createField(
+          `Jugador ${i + 1}`,
+          input,
+          `playerName${i}`
+        );
+        
+        grid.appendChild(field);
+      }
+      
+      content.appendChild(grid);
+      
+      const tip = Utils.createElement('p', 'muted center', {
+        textContent: 'Si no introduces nombres, se usará "Jugador 1", "Jugador 2", etc.',
+        style: 'margin-top: 12px;'
+      });
+      content.appendChild(tip);
+      
+      const card = Components.createCard({
+        title: 'Nombres de jugadores',
+        chip: `${GameState.numPlayers} jugadores`,
+        content: content
+      });
+      
+      const btnRow = Utils.createElement('div', 'btn-row');
+      
+      const startBtn = Components.createButton('Empezar partida', () => {
+        GameState.playerNames = [];
+        for (let i = 0; i < GameState.numPlayers; i++) {
+          const input = document.querySelector(`[data-player="${i}"]`);
+          const name = input ? input.value.trim() : '';
+          GameState.playerNames.push(name || `Jugador ${i + 1}`);
+        }
+        
+        if (GameState.startNewGame()) {
+          Renderer.render();
+        }
+      }, { ariaLabel: 'Empezar la partida' });
+      
+      const backBtn = Components.createButton('Volver', () => {
+        GameState.screen = "menu";
+        Renderer.render();
+      }, { 
+        secondary: true,
+        ariaLabel: 'Volver al menú'
+      });
+      
+      btnRow.appendChild(startBtn);
+      btnRow.appendChild(backBtn);
+      card.appendChild(btnRow);
+      
+      return card;
+    },
+    
+    reveal_intro() {
+      const current = GameState.currentRevealPlayer;
+      const playerName = GameState.playerNames[current] || `Jugador ${current + 1}`;
+      
+      const content = document.createElement('div');
+      content.className = 'center';
+      content.innerHTML = `
+        <h2>Pasa el móvil a</h2>
+        <div class="player-name-display">${Utils.sanitizeHTML(playerName)}</div>
+        <p class="muted">
+          Que nadie más mire la pantalla. Cuando esté listo, que toque el botón para ver su rol secreto.
+        </p>
+      `;
+      
+      const steps = Components.createSteps(0);
+      content.appendChild(steps);
+      
+      const card = Components.createCard({
+        title: 'Mirar rol',
+        chip: `${current + 1} de ${GameState.numPlayers}`,
+        content: content
+      });
+      
+      const btnRow = Utils.createElement('div', 'btn-row');
+      
+      const showBtn = Components.createButton('Ver mi rol', () => {
+        GameState.screen = "reveal_role";
+        Renderer.render();
+      }, { ariaLabel: `${playerName}: Ver mi rol secreto` });
+      
+      btnRow.appendChild(showBtn);
+      card.appendChild(btnRow);
+      
+      return card;
+    },
+    
+    reveal_role() {
+      const idx = GameState.currentRevealPlayer;
+      const isImpostor = idx === GameState.impostorIndex;
+      const current = idx + 1;
+      const playerName = GameState.playerNames[idx] || `Jugador ${current}`;
+      
+      const content = document.createElement('div');
+      content.className = 'center';
+      
+      if (isImpostor) {
+        content.innerHTML = `
+          <div class="player-name-display">${Utils.sanitizeHTML(playerName)}</div>
+          <p class="muted">
+            ¡Eres el IMPOSTOR! No conoces la palabra exacta, pero te damos una pista relacionada. Debes fingir que sabes la palabra real.
+          </p>
+          <div class="word word-hint word-secret" role="status" aria-live="polite">
+            Tu pista: ${Utils.sanitizeHTML(GameState.hintWord)}
+          </div>
+          <p class="muted">
+            Categoría: <strong>${Utils.sanitizeHTML(GameState.category)}</strong><br>
+            Usa esta pista para deducir la palabra real y da pistas creíbles sin revelar que no la conoces.
+          </p>
+        `;
+      } else {
+        content.innerHTML = `
+          <div class="player-name-display">${Utils.sanitizeHTML(playerName)}</div>
+          <p class="muted">
+            Memoriza la palabra secreta. Luego pasa el móvil boca abajo al siguiente jugador.
+          </p>
+          <div class="word" role="status" aria-live="polite">
+            ${Utils.sanitizeHTML(GameState.secretWord)}
+          </div>
+          <p class="muted">
+            Categoría: <strong>${Utils.sanitizeHTML(GameState.category)}</strong>
+          </p>
+        `;
+      }
+      
+      const steps = Components.createSteps(1);
+      content.appendChild(steps);
+      
+      const card = Components.createCard({
+        title: 'Tu rol',
+        chip: isImpostor ? 'IMPOSTOR' : 'CIVIL',
+        chipType: isImpostor ? 'impostor' : 'normal',
+        content: content
+      });
+      
+      const btnRow = Utils.createElement('div', 'btn-row');
+      
+      const nextText = (current === GameState.numPlayers)
+        ? "Empezar ronda de pistas"
+        : "Ocultar y pasar al siguiente";
+      
+      const nextBtn = Components.createButton(nextText, () => {
+        if (current === GameState.numPlayers) {
+          GameState.screen = "hints";
+        } else {
+          GameState.currentRevealPlayer++;
+          GameState.screen = "reveal_intro";
+        }
+        Renderer.render();
+      }, { ariaLabel: nextText });
+      
+      btnRow.appendChild(nextBtn);
+      card.appendChild(btnRow);
+      
+      return card;
+    },
+    
+    hints() {
+      const content = document.createElement('div');
+      content.className = 'center';
+      content.innerHTML = `
+        <h2>Es vuestro turno de hablar</h2>
+        <p class="muted">
+          Uno por uno, cada jugador dice <strong>una palabra</strong> relacionada con la palabra secreta, pero sin decirla exacta.
+        </p>
+        <p class="muted">
+          El impostor debe escuchar con atención y fingir que conoce la palabra, usando su pista como referencia.
+        </p>
+        <div class="badges">
+          <span class="badge">Consejo: sé específico pero no obvio.</span>
+          <span class="badge">Escucha dudas, silencios y contradicciones.</span>
+        </div>
+      `;
+      
+      const steps = Components.createSteps(2);
+      content.appendChild(steps);
+      
+      const card = Components.createCard({
+        title: `Ronda ${GameState.roundNumber}`,
+        chip: 'Pistas de una palabra',
+        content: content
+      });
+      
+      const btnRow = Utils.createElement('div', 'btn-row');
+      
+      const nextRoundBtn = Components.createButton('Otra ronda de pistas', () => {
+        GameState.roundNumber++;
+        Renderer.render();
+      }, { 
+        secondary: true,
+        ariaLabel: 'Iniciar otra ronda de pistas'
+      });
+      
+      const votingBtn = Components.createButton('Ir a votación', () => {
+        GameState.screen = "voting";
+        Renderer.render();
+      }, { ariaLabel: 'Proceder a la votación final' });
+      
+      btnRow.appendChild(nextRoundBtn);
+      btnRow.appendChild(votingBtn);
+      card.appendChild(btnRow);
+      
+      return card;
+    },
+    
+    voting() {
+      const content = document.createElement('div');
+      content.innerHTML = `
+        <h2 class="center">¿Quién crees que es el impostor?</h2>
+        <p class="muted center">
+          Comentad entre todos y elegid <strong>un jugador</strong> como sospechoso principal. Tocad su nombre para marcarlo.
+        </p>
+      `;
+      
+      const list = Utils.createElement('div', 'players-list', {
+        role: 'group',
+        'aria-label': 'Seleccionar jugador sospechoso'
+      });
+      
+      for (let i = 0; i < GameState.numPlayers; i++) {
+        const playerName = GameState.playerNames[i] || `Jugador ${i + 1}`;
+        
+        const pill = Utils.createElement('button', 'player-pill', {
+          type: 'button',
+          'aria-pressed': GameState.votingSelectedIndex === i,
+          'aria-label': playerName
+        });
+        
+        if (GameState.votingSelectedIndex === i) {
+          pill.classList.add('selected');
+        }
+        
+        pill.innerHTML = `
+          <span class="player-number">#${i + 1}</span>
+          <span class="player-name">${Utils.sanitizeHTML(playerName)}</span>
+        `;
+        
+        pill.addEventListener('click', () => {
+          GameState.votingSelectedIndex = (GameState.votingSelectedIndex === i) ? null : i;
+          Renderer.render();
+        });
+        
+        list.appendChild(pill);
+      }
+      
+      content.appendChild(list);
+      
+      const info = Utils.createElement('p', 'muted center', {
+        textContent: 'Si no os ponéis de acuerdo, podéis no marcar a nadie y descubrir el resultado igualmente.',
+        style: 'margin-top: 10px;'
+      });
+      content.appendChild(info);
+      
+      const card = Components.createCard({
+        title: 'Votación',
+        chip: 'Ronda final',
+        content: content
+      });
+      
+      const btnRow = Utils.createElement('div', 'btn-row');
+      
+      const revealBtn = Components.createButton('Revelar impostor', () => {
+        GameState.screen = "result";
+        Renderer.render();
+      }, { 
+        danger: true,
+        ariaLabel: 'Revelar quién es el impostor'
+      });
+      
+      btnRow.appendChild(revealBtn);
+      card.appendChild(btnRow);
+      
+      return card;
+    },
+    
+    result() {
+      const impostorNum = GameState.impostorIndex + 1;
+      const impostorName = GameState.playerNames[GameState.impostorIndex] || `Jugador ${impostorNum}`;
+      const voted = GameState.votingSelectedIndex != null ? GameState.votingSelectedIndex + 1 : null;
+      const votedName = voted != null ? (GameState.playerNames[GameState.votingSelectedIndex] || `Jugador ${voted}`) : null;
+      const correct = voted != null && voted === impostorNum;
+      
+      const title = correct ? "¡El impostor ha sido descubierto!" : "¡El impostor ha escapado!";
+      const subtitle = correct
+        ? "El grupo ha acertado la sospecha y ha desenmascarado al impostor."
+        : "El grupo no ha señalado al impostor correcto. El impostor gana esta ronda.";
+      
+      const content = document.createElement('div');
+      content.className = 'center';
+      content.innerHTML = `
+        <h2>${title}</h2>
+        <p class="muted">${subtitle}</p>
+        <div class="word" role="status" aria-live="polite">
+          Palabra secreta: ${Utils.sanitizeHTML(GameState.secretWord)}
+        </div>
+        <div class="word word-hint" style="font-size: 1.1rem; margin-top: 6px;">
+          Pista del impostor: ${Utils.sanitizeHTML(GameState.hintWord)}
+        </div>
+        <div class="player-name-display" style="background: rgba(255,75,106,0.18); border-color: rgba(255,75,106,0.5); color: var(--danger);">
+          Impostor: ${Utils.sanitizeHTML(impostorName)}
+        </div>
+        <p class="muted">
+          Voto del grupo: ${votedName ? Utils.sanitizeHTML(votedName) : "sin voto marcado"}
+        </p>
+        <div class="badges">
+          <span class="badge">Probad cambiar de categoría para la siguiente partida.</span>
+          <span class="badge">Sumad puntos: +1 para el equipo ganador en cada ronda.</span>
+        </div>
+      `;
+      
+      const card = Components.createCard({
+        title: 'Resultado',
+        chip: correct ? 'Victoria civiles' : 'Victoria impostor',
+        chipType: correct ? 'normal' : 'impostor',
+        content: content
+      });
+      
+      const btnRow = Utils.createElement('div', 'btn-row');
+      
+      const againBtn = Components.createButton('Nueva partida', () => {
+        if (GameState.startNewGame()) {
+          Renderer.render();
+        }
+      }, { ariaLabel: 'Comenzar una nueva partida con los mismos jugadores' });
+      
+      const menuBtn = Components.createButton('Volver al menú', () => {
+        GameState.reset();
+        GameState.screen = "menu";
+        Renderer.render();
+      }, { 
+        secondary: true,
+        ariaLabel: 'Volver al menú principal'
+      });
+      
+      btnRow.appendChild(againBtn);
+      btnRow.appendChild(menuBtn);
+      card.appendChild(btnRow);
+      
+      return card;
+    }
+  };
+
+  // ========
+  // Inicio
+  // ========
+
+  function init() {
+    Storage.load();
+    Renderer.init();
+    GameState.screen = "menu";
+    Renderer.render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+</body>
+</html>
