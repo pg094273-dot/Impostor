@@ -406,6 +406,35 @@
       display: inline-block;
     }
     
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+    
+    .stat-box {
+      background: rgba(40,224,169,0.08);
+      border: 1px solid rgba(40,224,169,0.2);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
     @media (min-height: 780px) {
       .app { 
         padding-top: 20px; 
@@ -441,166 +470,190 @@
     <main id="main" role="main"></main>
 
     <footer role="contentinfo">
-      Modo local "pasar el móvil". Pensado para 3‑12 personas.
+      Modo local "pasar el móvil". 12 categorías · 420 palabras.
     </footer>
   </div>
 
 <script>
   'use strict';
 
-  // =========================
-  // Configuración y constantes
-  // =========================
-
   const CONFIG = {
-    STORAGE_KEY: "impostor-web-opts-v3",
+    STORAGE_KEY: "impostor-web-opts-v4",
     MIN_PLAYERS: 3,
     MAX_PLAYERS: 24,
     DEFAULT_PLAYERS: 5
   };
 
-  // Cada palabra tiene una palabra relacionada como pista para el impostor
   const WORD_CATEGORIES = {
     "Comida": [
-      {word: "PIZZA", hint: "PASTA"},
-      {word: "HAMBURGUESA", hint: "BOCADILLO"},
-      {word: "ENSALADA", hint: "VERDURA"},
-      {word: "SUSHI", hint: "ARROZ"},
-      {word: "PAELLA", hint: "FIDEUÁ"},
-      {word: "TORTILLA", hint: "HUEVO"},
-      {word: "CHOCOLATE", hint: "CACAO"},
-      {word: "HELADO", hint: "POSTRE"},
-      {word: "CAFÉ", hint: "BEBIDA"},
-      {word: "TARTA", hint: "DULCE"},
-      {word: "PASTA", hint: "ESPAGUETI"},
-      {word: "QUESO", hint: "LÁCTEO"},
-      {word: "JAMÓN", hint: "EMBUTIDO"},
-      {word: "PAN", hint: "HARINA"},
-      {word: "ARROZ", hint: "CEREAL"},
-      {word: "PESCADO", hint: "MERLUZA"},
-      {word: "CARNE", hint: "FILETE"},
-      {word: "FRUTA", hint: "MANZANA"},
-      {word: "VERDURA", hint: "LECHUGA"},
-      {word: "SOPA", hint: "CALDO"},
-      {word: "BOCADILLO", hint: "SANDWICH"},
-      {word: "GALLETA", hint: "BIZCOCHO"},
-      {word: "YOGUR", hint: "LECHE"},
-      {word: "ZUMO", hint: "NARANJA"},
-      {word: "MIEL", hint: "AZÚCAR"}
+      {word: "PIZZA", hint: "PASTA"}, {word: "HAMBURGUESA", hint: "BOCADILLO"}, {word: "ENSALADA", hint: "VERDURA"},
+      {word: "SUSHI", hint: "ARROZ"}, {word: "PAELLA", hint: "FIDEUÁ"}, {word: "TORTILLA", hint: "HUEVO"},
+      {word: "CHOCOLATE", hint: "CACAO"}, {word: "HELADO", hint: "POSTRE"}, {word: "CAFÉ", hint: "BEBIDA"},
+      {word: "TARTA", hint: "DULCE"}, {word: "PASTA", hint: "ESPAGUETI"}, {word: "QUESO", hint: "LÁCTEO"},
+      {word: "JAMÓN", hint: "EMBUTIDO"}, {word: "PAN", hint: "HARINA"}, {word: "ARROZ", hint: "CEREAL"},
+      {word: "PESCADO", hint: "MERLUZA"}, {word: "CARNE", hint: "FILETE"}, {word: "FRUTA", hint: "MANZANA"},
+      {word: "VERDURA", hint: "LECHUGA"}, {word: "SOPA", hint: "CALDO"}, {word: "BOCADILLO", hint: "SANDWICH"},
+      {word: "GALLETA", hint: "BIZCOCHO"}, {word: "YOGUR", hint: "LECHE"}, {word: "ZUMO", hint: "NARANJA"},
+      {word: "MIEL", hint: "AZÚCAR"}, {word: "PATATAS", hint: "TUBÉRCULO"}, {word: "FRESA", hint: "FRUTO"},
+      {word: "POLLO", hint: "AVE"}, {word: "ATÚN", hint: "CONSERVA"}, {word: "MANTEQUILLA", hint: "GRASA"},
+      {word: "TOMATE", hint: "HORTALIZA"}, {word: "PEPINO", hint: "VEGETAL"}, {word: "MAÍZ", hint: "GRANO"},
+      {word: "NUEZ", hint: "FRUTO SECO"}, {word: "HUEVO", hint: "PROTEÍNA"}
     ],
     "Lugares": [
-      {word: "PLAYA", hint: "COSTA"},
-      {word: "MONTAÑA", hint: "SIERRA"},
-      {word: "COLEGIO", hint: "ESCUELA"},
-      {word: "OFICINA", hint: "TRABAJO"},
-      {word: "RESTAURANTE", hint: "BAR"},
-      {word: "AEROPUERTO", hint: "TERMINAL"},
-      {word: "MUSEO", hint: "GALERÍA"},
-      {word: "HOSPITAL", hint: "CLÍNICA"},
-      {word: "PARQUE", hint: "JARDÍN"},
-      {word: "SUPERMERCADO", hint: "TIENDA"},
-      {word: "CINE", hint: "TEATRO"},
-      {word: "BIBLIOTECA", hint: "LIBRERÍA"},
-      {word: "GIMNASIO", hint: "POLIDEPORTIVO"},
-      {word: "PISCINA", hint: "BALNEARIO"},
-      {word: "ESTADIO", hint: "CAMPO"},
-      {word: "HOTEL", hint: "HOSTAL"},
-      {word: "BANCO", hint: "CAJERO"},
-      {word: "FARMACIA", hint: "DROGUERÍA"},
-      {word: "IGLESIA", hint: "CATEDRAL"},
-      {word: "PLAZA", hint: "AVENIDA"},
-      {word: "MERCADO", hint: "MERCADILLO"},
-      {word: "PUERTO", hint: "MUELLE"},
-      {word: "ESTACIÓN", hint: "ANDÉN"},
-      {word: "UNIVERSIDAD", hint: "CAMPUS"},
-      {word: "ZOOLÓGICO", hint: "SAFARI"}
+      {word: "PLAYA", hint: "COSTA"}, {word: "MONTAÑA", hint: "SIERRA"}, {word: "COLEGIO", hint: "ESCUELA"},
+      {word: "OFICINA", hint: "TRABAJO"}, {word: "RESTAURANTE", hint: "BAR"}, {word: "AEROPUERTO", hint: "TERMINAL"},
+      {word: "MUSEO", hint: "GALERÍA"}, {word: "HOSPITAL", hint: "CLÍNICA"}, {word: "PARQUE", hint: "JARDÍN"},
+      {word: "SUPERMERCADO", hint: "TIENDA"}, {word: "CINE", hint: "TEATRO"}, {word: "BIBLIOTECA", hint: "LIBRERÍA"},
+      {word: "GIMNASIO", hint: "POLIDEPORTIVO"}, {word: "PISCINA", hint: "BALNEARIO"}, {word: "ESTADIO", hint: "CAMPO"},
+      {word: "HOTEL", hint: "HOSTAL"}, {word: "BANCO", hint: "CAJERO"}, {word: "FARMACIA", hint: "DROGUERÍA"},
+      {word: "IGLESIA", hint: "CATEDRAL"}, {word: "PLAZA", hint: "AVENIDA"}, {word: "MERCADO", hint: "MERCADILLO"},
+      {word: "PUERTO", hint: "MUELLE"}, {word: "ESTACIÓN", hint: "ANDÉN"}, {word: "UNIVERSIDAD", hint: "CAMPUS"},
+      {word: "ZOOLÓGICO", hint: "SAFARI"}, {word: "BOSQUE", hint: "SELVA"}, {word: "DESIERTO", hint: "DUNAS"},
+      {word: "VOLCÁN", hint: "CRÁTER"}, {word: "RÍO", hint: "ARROYO"}, {word: "LAGO", hint: "LAGUNA"},
+      {word: "CUEVA", hint: "GRUTA"}, {word: "CASTILLO", hint: "FORTALEZA"}, {word: "PUENTE", hint: "VIADUCTO"},
+      {word: "CIUDAD", hint: "METRÓPOLI"}, {word: "PUEBLO", hint: "ALDEA"}
     ],
     "Objetos": [
-      {word: "MÓVIL", hint: "TELÉFONO"},
-      {word: "LLAVE", hint: "CERRADURA"},
-      {word: "LIBRO", hint: "REVISTA"},
-      {word: "GAFAS", hint: "LENTE"},
-      {word: "ORDENADOR", hint: "PANTALLA"},
-      {word: "SILLA", hint: "TABURETE"},
-      {word: "MESA", hint: "ESCRITORIO"},
-      {word: "RELOJ", hint: "CRONÓMETRO"},
-      {word: "AURICULARES", hint: "CASCOS"},
-      {word: "MOCHILA", hint: "BOLSO"},
-      {word: "LÁMPARA", hint: "LUZ"},
-      {word: "ESPEJO", hint: "CRISTAL"},
-      {word: "ALMOHADA", hint: "COJÍN"},
-      {word: "MANTA", hint: "COLCHA"},
-      {word: "PARAGUAS", hint: "IMPERMEABLE"},
-      {word: "BOTELLA", hint: "VASO"},
-      {word: "CUCHILLO", hint: "TENEDOR"},
-      {word: "PLATO", hint: "BANDEJA"},
-      {word: "CÁMARA", hint: "FOTO"},
-      {word: "TELEVISIÓN", hint: "MONITOR"},
-      {word: "RADIO", hint: "ALTAVOZ"},
-      {word: "CALCULADORA", hint: "ÁBACO"},
-      {word: "CALENDARIO", hint: "AGENDA"},
-      {word: "CARTERA", hint: "MONEDERO"},
-      {word: "LINTERNA", hint: "FOCO"}
+      {word: "MÓVIL", hint: "TELÉFONO"}, {word: "LLAVE", hint: "CERRADURA"}, {word: "LIBRO", hint: "REVISTA"},
+      {word: "GAFAS", hint: "LENTE"}, {word: "ORDENADOR", hint: "PANTALLA"}, {word: "SILLA", hint: "TABURETE"},
+      {word: "MESA", hint: "ESCRITORIO"}, {word: "RELOJ", hint: "CRONÓMETRO"}, {word: "AURICULARES", hint: "CASCOS"},
+      {word: "MOCHILA", hint: "BOLSO"}, {word: "LÁMPARA", hint: "LUZ"}, {word: "ESPEJO", hint: "CRISTAL"},
+      {word: "ALMOHADA", hint: "COJÍN"}, {word: "MANTA", hint: "COLCHA"}, {word: "PARAGUAS", hint: "IMPERMEABLE"},
+      {word: "BOTELLA", hint: "VASO"}, {word: "CUCHILLO", hint: "TENEDOR"}, {word: "PLATO", hint: "BANDEJA"},
+      {word: "CÁMARA", hint: "FOTO"}, {word: "TELEVISIÓN", hint: "MONITOR"}, {word: "RADIO", hint: "ALTAVOZ"},
+      {word: "CALCULADORA", hint: "ÁBACO"}, {word: "CALENDARIO", hint: "AGENDA"}, {word: "CARTERA", hint: "MONEDERO"},
+      {word: "LINTERNA", hint: "FOCO"}, {word: "PINCEL", hint: "BROCHA"}, {word: "TIJERAS", hint: "CORTADOR"},
+      {word: "MARTILLO", hint: "HERRAMIENTA"}, {word: "TORNILLO", hint: "CLAVO"}, {word: "REGLA", hint: "ESCUADRA"},
+      {word: "BOLÍGRAFO", hint: "PLUMA"}, {word: "LÁPIZ", hint: "GRAFITO"}, {word: "GOMA", hint: "BORRADOR"},
+      {word: "TAZA", hint: "JARRA"}, {word: "SARTÉN", hint: "CACEROLA"}
     ],
     "Animales": [
-      {word: "PERRO", hint: "CACHORRO"},
-      {word: "GATO", hint: "FELINO"},
-      {word: "LEÓN", hint: "TIGRE"},
-      {word: "ELEFANTE", hint: "MAMUT"},
-      {word: "PEZ", hint: "PIRAÑA"},
-      {word: "PÁJARO", hint: "CANARIO"},
-      {word: "CABALLO", hint: "YEGUA"},
-      {word: "RANA", hint: "SAPO"},
-      {word: "OSO", hint: "PANDA"},
-      {word: "MONO", hint: "CHIMPANCÉ"},
-      {word: "VACA", hint: "TORO"},
-      {word: "OVEJA", hint: "CORDERO"},
-      {word: "CERDO", hint: "JABALÍ"},
-      {word: "CONEJO", hint: "LIEBRE"},
-      {word: "RATÓN", hint: "RATA"},
-      {word: "SERPIENTE", hint: "COBRA"},
-      {word: "COCODRILO", hint: "CAIMÁN"},
-      {word: "ÁGUILA", hint: "HALCÓN"},
-      {word: "TIBURÓN", hint: "BALLENA"},
-      {word: "DELFÍN", hint: "ORCA"},
-      {word: "MARIPOSA", hint: "POLILLA"},
-      {word: "HORMIGA", hint: "ABEJA"},
-      {word: "ARAÑA", hint: "ESCORPIÓN"},
-      {word: "TORTUGA", hint: "GALÁPAGO"},
-      {word: "PINGÜINO", hint: "FOCA"}
+      {word: "PERRO", hint: "CACHORRO"}, {word: "GATO", hint: "FELINO"}, {word: "LEÓN", hint: "TIGRE"},
+      {word: "ELEFANTE", hint: "MAMUT"}, {word: "PEZ", hint: "PIRAÑA"}, {word: "PÁJARO", hint: "CANARIO"},
+      {word: "CABALLO", hint: "YEGUA"}, {word: "RANA", hint: "SAPO"}, {word: "OSO", hint: "PANDA"},
+      {word: "MONO", hint: "CHIMPANCÉ"}, {word: "VACA", hint: "TORO"}, {word: "OVEJA", hint: "CORDERO"},
+      {word: "CERDO", hint: "JABALÍ"}, {word: "CONEJO", hint: "LIEBRE"}, {word: "RATÓN", hint: "RATA"},
+      {word: "SERPIENTE", hint: "COBRA"}, {word: "COCODRILO", hint: "CAIMÁN"}, {word: "ÁGUILA", hint: "HALCÓN"},
+      {word: "TIBURÓN", hint: "BALLENA"}, {word: "DELFÍN", hint: "ORCA"}, {word: "MARIPOSA", hint: "POLILLA"},
+      {word: "HORMIGA", hint: "ABEJA"}, {word: "ARAÑA", hint: "ESCORPIÓN"}, {word: "TORTUGA", hint: "GALÁPAGO"},
+      {word: "PINGÜINO", hint: "FOCA"}, {word: "JIRAFA", hint: "CEBRA"}, {word: "RINOCERONTE", hint: "HIPOPÓTAMO"},
+      {word: "CANGURO", hint: "KOALA"}, {word: "LOBO", hint: "ZORRO"}, {word: "BÚHO", hint: "LECHUZA"},
+      {word: "LORO", hint: "PAPAGAYO"}, {word: "PATO", hint: "GANSO"}, {word: "GALLINA", hint: "GALLO"},
+      {word: "CAMELLO", hint: "DROMEDARIO"}, {word: "PULPO", hint: "CALAMAR"}
     ],
     "Profesiones": [
-      {word: "MÉDICO", hint: "ENFERMERO"},
-      {word: "PROFESOR", hint: "MAESTRO"},
-      {word: "COCINERO", hint: "CHEF"},
-      {word: "BOMBERO", hint: "RESCATISTA"},
-      {word: "POLICÍA", hint: "GUARDIA"},
-      {word: "ABOGADO", hint: "JUEZ"},
-      {word: "INGENIERO", hint: "ARQUITECTO"},
-      {word: "ARTISTA", hint: "PINTOR"},
-      {word: "MÚSICO", hint: "CANTANTE"},
-      {word: "DEPORTISTA", hint: "ATLETA"},
-      {word: "ACTOR", hint: "COMEDIANTE"},
-      {word: "ESCRITOR", hint: "PERIODISTA"},
-      {word: "FOTÓGRAFO", hint: "CAMARÓGRAFO"},
-      {word: "PILOTO", hint: "AZAFATA"},
-      {word: "CONDUCTOR", hint: "TAXISTA"},
-      {word: "AGRICULTOR", hint: "GANADERO"},
-      {word: "CARPINTERO", hint: "ALBAÑIL"},
-      {word: "ELECTRICISTA", hint: "FONTANERO"},
-      {word: "MECÁNICO", hint: "SOLDADOR"},
-      {word: "PELUQUERO", hint: "BARBERO"},
-      {word: "VENDEDOR", hint: "COMERCIANTE"},
-      {word: "BANQUERO", hint: "CONTADOR"},
-      {word: "CIENTÍFICO", hint: "QUÍMICO"},
-      {word: "VETERINARIO", hint: "BIÓLOGO"},
-      {word: "PROGRAMADOR", hint: "DISEÑADOR"}
+      {word: "MÉDICO", hint: "ENFERMERO"}, {word: "PROFESOR", hint: "MAESTRO"}, {word: "COCINERO", hint: "CHEF"},
+      {word: "BOMBERO", hint: "RESCATISTA"}, {word: "POLICÍA", hint: "GUARDIA"}, {word: "ABOGADO", hint: "JUEZ"},
+      {word: "INGENIERO", hint: "ARQUITECTO"}, {word: "ARTISTA", hint: "PINTOR"}, {word: "MÚSICO", hint: "CANTANTE"},
+      {word: "DEPORTISTA", hint: "ATLETA"}, {word: "ACTOR", hint: "COMEDIANTE"}, {word: "ESCRITOR", hint: "PERIODISTA"},
+      {word: "FOTÓGRAFO", hint: "CAMARÓGRAFO"}, {word: "PILOTO", hint: "AZAFATA"}, {word: "CONDUCTOR", hint: "TAXISTA"},
+      {word: "AGRICULTOR", hint: "GANADERO"}, {word: "CARPINTERO", hint: "ALBAÑIL"}, {word: "ELECTRICISTA", hint: "FONTANERO"},
+      {word: "MECÁNICO", hint: "SOLDADOR"}, {word: "PELUQUERO", hint: "BARBERO"}, {word: "VENDEDOR", hint: "COMERCIANTE"},
+      {word: "BANQUERO", hint: "CONTADOR"}, {word: "CIENTÍFICO", hint: "QUÍMICO"}, {word: "VETERINARIO", hint: "BIÓLOGO"},
+      {word: "PROGRAMADOR", hint: "DISEÑADOR"}, {word: "DENTISTA", hint: "ORTODONCISTA"}, {word: "PSICÓLOGO", hint: "TERAPEUTA"},
+      {word: "FARMACÉUTICO", hint: "QUÍMICO"}, {word: "JARDINERO", hint: "FLORISTA"}, {word: "PANADERO", hint: "PASTELERO"},
+      {word: "CARTERO", hint: "MENSAJERO"}, {word: "BIBLIOTECARIO", hint: "ARCHIVISTA"}, {word: "TRADUCTOR", hint: "INTÉRPRETE"},
+      {word: "DETECTIVE", hint: "INVESTIGADOR"}, {word: "ASTRONAUTA", hint: "COSMONAUTA"}
+    ],
+    "Deportes": [
+      {word: "FÚTBOL", hint: "BALÓN"}, {word: "BALONCESTO", hint: "CANASTA"}, {word: "TENIS", hint: "RAQUETA"},
+      {word: "NATACIÓN", hint: "PISCINA"}, {word: "CICLISMO", hint: "BICICLETA"}, {word: "ATLETISMO", hint: "CARRERA"},
+      {word: "VOLEIBOL", hint: "RED"}, {word: "RUGBY", hint: "OVAL"}, {word: "BÉISBOL", hint: "BATE"},
+      {word: "GOLF", hint: "HOYO"}, {word: "BOXEO", hint: "GUANTE"}, {word: "ESQUÍ", hint: "NIEVE"},
+      {word: "SURF", hint: "OLA"}, {word: "ESCALADA", hint: "MONTAÑA"}, {word: "YOGA", hint: "MEDITACIÓN"},
+      {word: "GIMNASIA", hint: "BARRA"}, {word: "HOCKEY", hint: "DISCO"}, {word: "PATINAJE", hint: "HIELO"},
+      {word: "ESGRIMA", hint: "ESPADA"}, {word: "JUDO", hint: "TATAMI"}, {word: "KÁRATE", hint: "CINTURÓN"},
+      {word: "PARACAIDISMO", hint: "CAÍDA"}, {word: "BUCEO", hint: "MAR"}, {word: "EQUITACIÓN", hint: "CABALLO"},
+      {word: "MARATÓN", hint: "RESISTENCIA"}, {word: "SNOWBOARD", hint: "TABLA"}, {word: "REMO", hint: "PALA"},
+      {word: "HALTEROFILIA", hint: "PESAS"}, {word: "TRIATLÓN", hint: "COMBINADO"}, {word: "POLO", hint: "MALLETE"},
+      {word: "BADMINTON", hint: "VOLANTE"}, {word: "ARCO", hint: "FLECHA"}, {word: "BOLOS", hint: "PIN"},
+      {word: "DARDOS", hint: "DIANA"}, {word: "AJEDREZ", hint: "TABLERO"}
+    ],
+    "Países": [
+      {word: "ESPAÑA", hint: "MADRID"}, {word: "FRANCIA", hint: "PARÍS"}, {word: "ITALIA", hint: "ROMA"},
+      {word: "ALEMANIA", hint: "BERLÍN"}, {word: "PORTUGAL", hint: "LISBOA"}, {word: "INGLATERRA", hint: "LONDRES"},
+      {word: "GRECIA", hint: "ATENAS"}, {word: "RUSIA", hint: "MOSCÚ"}, {word: "CHINA", hint: "PEKÍN"},
+      {word: "JAPÓN", hint: "TOKIO"}, {word: "INDIA", hint: "DELHI"}, {word: "BRASIL", hint: "BRASILIA"},
+      {word: "ARGENTINA", hint: "BUENOS AIRES"}, {word: "MÉXICO", hint: "CIUDAD"}, {word: "CANADÁ", hint: "OTTAWA"},
+      {word: "AUSTRALIA", hint: "CANBERRA"}, {word: "EGIPTO", hint: "CAIRO"}, {word: "MARRUECOS", hint: "RABAT"},
+      {word: "TURQUÍA", hint: "ANKARA"}, {word: "HOLANDA", hint: "AMSTERDAM"}, {word: "BÉLGICA", hint: "BRUSELAS"},
+      {word: "SUIZA", hint: "BERNA"}, {word: "AUSTRIA", hint: "VIENA"}, {word: "SUECIA", hint: "ESTOCOLMO"},
+      {word: "NORUEGA", hint: "OSLO"}, {word: "DINAMARCA", hint: "COPENHAGUE"}, {word: "FINLANDIA", hint: "HELSINKI"},
+      {word: "POLONIA", hint: "VARSOVIA"}, {word: "IRLANDA", hint: "DUBLÍN"}, {word: "ESCOCIA", hint: "EDIMBURGO"},
+      {word: "ISLANDIA", hint: "REIKIAVIK"}, {word: "PERÚ", hint: "LIMA"}, {word: "CHILE", hint: "SANTIAGO"},
+      {word: "COLOMBIA", hint: "BOGOTÁ"}, {word: "CUBA", hint: "HABANA"}
+    ],
+    "Tecnología": [
+      {word: "INTERNET", hint: "WEB"}, {word: "ORDENADOR", hint: "COMPUTADORA"}, {word: "SMARTPHONE", hint: "TELÉFONO"},
+      {word: "TABLET", hint: "PANTALLA"}, {word: "RATÓN", hint: "CURSOR"}, {word: "TECLADO", hint: "TECLA"},
+      {word: "IMPRESORA", hint: "PAPEL"}, {word: "ESCÁNER", hint: "DIGITALIZAR"}, {word: "ROUTER", hint: "WIFI"},
+      {word: "CABLE", hint: "CONEXIÓN"}, {word: "USB", hint: "MEMORIA"}, {word: "DISCO", hint: "ALMACENAMIENTO"},
+      {word: "PROCESADOR", hint: "CPU"}, {word: "MEMORIA", hint: "RAM"}, {word: "PANTALLA", hint: "MONITOR"},
+      {word: "CÁMARA", hint: "LENTE"}, {word: "MICRÓFONO", hint: "AUDIO"}, {word: "ALTAVOZ", hint: "SONIDO"},
+      {word: "AURICULARES", hint: "MÚSICA"}, {word: "BATERÍA", hint: "ENERGÍA"}, {word: "CARGADOR", hint: "CORRIENTE"},
+      {word: "SOFTWARE", hint: "PROGRAMA"}, {word: "APLICACIÓN", hint: "APP"}, {word: "NAVEGADOR", hint: "CHROME"},
+      {word: "CORREO", hint: "EMAIL"}, {word: "VIDEOJUEGO", hint: "CONSOLA"}, {word: "DRON", hint: "VUELO"},
+      {word: "ROBOT", hint: "AUTOMÁTICO"}, {word: "SATÉLITE", hint: "ÓRBITA"}, {word: "LÁSER", hint: "HAZ"},
+      {word: "BLUETOOTH", hint: "INALÁMBRICO"}, {word: "SERVIDOR", hint: "HOSTING"}, {word: "FIREWALL", hint: "SEGURIDAD"},
+      {word: "ANTIVIRUS", hint: "PROTECCIÓN"}, {word: "ALGORITMO", hint: "CÓDIGO"}
+    ],
+    "Naturaleza": [
+      {word: "ÁRBOL", hint: "TRONCO"}, {word: "FLOR", hint: "PÉTALO"}, {word: "HOJA", hint: "RAMA"},
+      {word: "SEMILLA", hint: "GRANO"}, {word: "CÉSPED", hint: "HIERBA"}, {word: "NUBE", hint: "CIELO"},
+      {word: "SOL", hint: "ESTRELLA"}, {word: "LUNA", hint: "SATÉLITE"}, {word: "LLUVIA", hint: "AGUA"},
+      {word: "NIEVE", hint: "COPO"}, {word: "VIENTO", hint: "BRISA"}, {word: "TRUENO", hint: "RAYO"},
+      {word: "ARCOÍRIS", hint: "COLOR"}, {word: "MAR", hint: "OCÉANO"}, {word: "OLA", hint: "MAREA"},
+      {word: "PLAYA", hint: "ARENA"}, {word: "ROCA", hint: "PIEDRA"}, {word: "MONTAÑA", hint: "PICO"},
+      {word: "VALLE", hint: "LLANURA"}, {word: "COLINA", hint: "ELEVACIÓN"}, {word: "RÍO", hint: "CORRIENTE"},
+      {word: "CASCADA", hint: "SALTO"}, {word: "FUEGO", hint: "LLAMA"}, {word: "HIELO", hint: "FRÍO"},
+      {word: "TIERRA", hint: "SUELO"}, {word: "BARRO", hint: "FANGO"}, {word: "CRISTAL", hint: "MINERAL"},
+      {word: "ORO", hint: "METAL"}, {word: "DIAMANTE", hint: "GEMA"}, {word: "VOLCÁN", hint: "LAVA"},
+      {word: "TERREMOTO", hint: "TEMBLOR"}, {word: "HURACÁN", hint: "CICLÓN"}, {word: "TORNADO", hint: "TORBELLINO"},
+      {word: "ECLIPSE", hint: "SOMBRA"}, {word: "COMETA", hint: "COLA"}
+    ],
+    "Transportes": [
+      {word: "COCHE", hint: "AUTOMÓVIL"}, {word: "MOTO", hint: "MOTOCICLETA"}, {word: "BICICLETA", hint: "PEDAL"},
+      {word: "AUTOBÚS", hint: "TRANSPORTE"}, {word: "TREN", hint: "FERROCARRIL"}, {word: "METRO", hint: "SUBTERRÁNEO"},
+      {word: "TRANVÍA", hint: "RAÍL"}, {word: "AVIÓN", hint: "VUELO"}, {word: "HELICÓPTERO", hint: "ROTOR"},
+      {word: "BARCO", hint: "BUQUE"}, {word: "YATE", hint: "EMBARCACIÓN"}, {word: "VELERO", hint: "VELA"},
+      {word: "LANCHA", hint: "MOTOR"}, {word: "SUBMARINO", hint: "SUMERGIBLE"}, {word: "CAMIÓN", hint: "CARGA"},
+      {word: "FURGONETA", hint: "VAN"}, {word: "TAXI", hint: "SERVICIO"}, {word: "AMBULANCIA", hint: "EMERGENCIA"},
+      {word: "BOMBEROS", hint: "SIRENA"}, {word: "POLICÍA", hint: "PATRULLA"}, {word: "COHETE", hint: "ESPACIO"},
+      {word: "GLOBO", hint: "AIRE"}, {word: "PARACAÍDAS", hint: "DESCENSO"}, {word: "TELEFÉRICO", hint: "CABLE"},
+      {word: "FUNICULAR", hint: "INCLINADO"}, {word: "PATINETE", hint: "RUEDA"}, {word: "MONOPATÍN", hint: "TABLA"},
+      {word: "TRINEO", hint: "NIEVE"}, {word: "CANOA", hint: "REMO"}, {word: "KAYAK", hint: "PALA"},
+      {word: "CARRUAJE", hint: "CABALLO"}, {word: "CAMELLO", hint: "JOROBA"}, {word: "ELEFANTE", hint: "TROMPA"},
+      {word: "TRINEO", hint: "PERRO"}, {word: "TELEFÉRICO", hint: "GÓNDOLA"}
+    ],
+    "Música": [
+      {word: "GUITARRA", hint: "CUERDA"}, {word: "PIANO", hint: "TECLA"}, {word: "BATERÍA", hint: "TAMBOR"},
+      {word: "VIOLÍN", hint: "ARCO"}, {word: "TROMPETA", hint: "VIENTO"}, {word: "FLAUTA", hint: "SOPLO"},
+      {word: "SAXOFÓN", hint: "BOQUILLA"}, {word: "TAMBOR", hint: "PARCHE"}, {word: "ARPA", hint: "CUERDAS"},
+      {word: "ACORDEÓN", hint: "FUELLE"}, {word: "VIOLONCHELO", hint: "GRAVE"}, {word: "CONTRABAJO", hint: "CUERDAS"},
+      {word: "CLARINETE", hint: "LENGÜETA"}, {word: "OBOE", hint: "CAÑA"}, {word: "TUBA", hint: "METAL"},
+      {word: "XILÓFONO", hint: "LÁMINA"}, {word: "MARACAS", hint: "PERCUSIÓN"}, {word: "PANDERETA", hint: "CASCABEL"},
+      {word: "CASTAÑUELAS", hint: "TABLILLAS"}, {word: "TRIÁNGULO", hint: "METAL"}, {word: "GONG", hint: "DISCO"},
+      {word: "TIMBAL", hint: "BOMBO"}, {word: "ARMÓNICA", hint: "SOPLO"}, {word: "UKELELE", hint: "HAWAIANO"},
+      {word: "BANJO", hint: "CUERDA"}, {word: "MANDOLINA", hint: "PLECTRO"}, {word: "GAITA", hint: "ESCOCÉS"},
+      {word: "ÓRGANO", hint: "TUBOS"}, {word: "SINTETIZADOR", hint: "ELECTRÓNICO"}, {word: "THEREMIN", hint: "ONDAS"},
+      {word: "DJEMBE", hint: "AFRICANO"}, {word: "BONGÓ", hint: "PAREJA"}, {word: "CONGA", hint: "LATINO"},
+      {word: "SITAR", hint: "INDIO"}, {word: "BALALAICA", hint: "RUSO"}
+    ],
+    "Ropa": [
+      {word: "CAMISA", hint: "BOTÓN"}, {word: "PANTALÓN", hint: "PIERNA"}, {word: "VESTIDO", hint: "FALDA"},
+      {word: "CHAQUETA", hint: "ABRIGO"}, {word: "JERSEY", hint: "LANA"}, {word: "CAMISETA", hint: "MANGA"},
+      {word: "FALDA", hint: "PLIEGUE"}, {word: "ZAPATO", hint: "PIE"}, {word: "BOTA", hint: "TACÓN"},
+      {word: "ZAPATILLA", hint: "DEPORTIVA"}, {word: "SANDALIA", hint: "TIRA"}, {word: "CALCETÍN", hint: "MEDIA"},
+      {word: "BUFANDA", hint: "CUELLO"}, {word: "GUANTE", hint: "MANO"}, {word: "GORRO", hint: "CABEZA"},
+      {word: "SOMBRERO", hint: "ALA"}, {word: "CORBATA", hint: "NUDO"}, {word: "PAJARITA", hint: "MOÑO"},
+      {word: "CINTURÓN", hint: "HEBILLA"}, {word: "TIRANTES", hint: "SUJECIÓN"}, {word: "ROPA INTERIOR", hint: "PRENDA"},
+      {word: "SUJETADOR", hint: "SOSTÉN"}, {word: "PIJAMA", hint: "DORMIR"}, {word: "BATA", hint: "CASA"},
+      {word: "TRAJE", hint: "ELEGANTE"}, {word: "ESMOQUIN", hint: "GALA"}, {word: "BIKINI", hint: "BAÑADOR"},
+      {word: "BAÑADOR", hint: "PLAYA"}, {word: "CHALECO", hint: "SIN MANGA"}, {word: "POLO", hint: "CUELLO"},
+      {word: "SUDADERA", hint: "CAPUCHA"}, {word: "LEGGINS", hint: "AJUSTADO"}, {word: "VAQUEROS", hint: "DENIM"},
+      {word: "PARKA", hint: "CAPUCHA"}, {word: "IMPERMEABLE", hint: "LLUVIA"}
     ]
   };
-
-  // ================
-  // Estado de juego
-  // ================
 
   const GameState = {
     screen: "menu",
@@ -627,11 +680,9 @@
     },
     
     startNewGame() {
-      // Seleccionar categoría aleatoria
       const categoryKeys = Object.keys(WORD_CATEGORIES);
       this.category = Utils.pickRandom(categoryKeys);
       
-      // Seleccionar palabra aleatoria de esa categoría
       const words = WORD_CATEGORIES[this.category] || [];
       if (words.length === 0) {
         console.error('No hay palabras disponibles');
@@ -649,10 +700,6 @@
       return true;
     }
   };
-
-  // =========
-  // Utilidades
-  // =========
 
   const Utils = {
     pickRandom(arr) {
@@ -682,10 +729,6 @@
       return element;
     }
   };
-
-  // ===================
-  // Gestión de Storage
-  // ===================
 
   const Storage = {
     save() {
@@ -724,10 +767,6 @@
     }
   };
 
-  // ===================
-  // Sistema de Render
-  // ===================
-
   const Renderer = {
     appRoot: null,
     
@@ -751,10 +790,6 @@
       }
     }
   };
-
-  // ===================
-  // Componentes UI
-  // ===================
 
   const Components = {
     createCard(config = {}) {
@@ -846,19 +881,28 @@
     }
   };
 
-  // ===================
-  // Vistas
-  // ===================
-
   const Views = {
     menu() {
       const content = document.createElement('div');
       content.innerHTML = `
         <h2 class="center">¿Listos para encontrar al impostor?</h2>
         <p class="center muted">
-          En cada partida se seleccionará aleatoriamente una categoría y una palabra secreta. Compartid el dispositivo y descubrid quién está fingiendo.
+          En cada partida se seleccionará aleatoriamente una categoría y una palabra secreta. ¡Máxima variedad en cada ronda!
         </p>
       `;
+      
+      const statsGrid = Utils.createElement('div', 'stats-grid');
+      statsGrid.innerHTML = `
+        <div class="stat-box">
+          <span class="stat-number">12</span>
+          <span class="stat-label">Categorías</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-number">420</span>
+          <span class="stat-label">Palabras</span>
+        </div>
+      `;
+      content.appendChild(statsGrid);
       
       const playersInput = Utils.createElement('input', '', {
         type: 'number',
@@ -877,18 +921,16 @@
       
       content.appendChild(playersField);
       
-      const info = Utils.createElement('p', 'muted', {
+      const categories = Utils.createElement('p', 'muted', {
         innerHTML: `
-          <strong>Categorías disponibles:</strong> Comida, Lugares, Objetos, Animales, Profesiones.<br>
-          <strong>Total de palabras:</strong> 125 palabras diferentes.<br><br>
-          La categoría y palabra se elegirán automáticamente al comenzar.
+          <strong>📂 Categorías:</strong> Comida · Lugares · Objetos · Animales · Profesiones · Deportes · Países · Tecnología · Naturaleza · Transportes · Música · Ropa
         `
       });
-      content.appendChild(info);
+      content.appendChild(categories);
       
       const card = Components.createCard({
         title: 'Bienvenido',
-        chip: 'Aleatorio · Local',
+        chip: 'Aleatorio · Mega',
         content: content
       });
       
@@ -949,7 +991,7 @@
       const tip = Utils.createElement('p', 'muted center', {
         innerHTML: `
           Si no introduces nombres, se usará "Jugador 1", "Jugador 2", etc.<br><br>
-          <strong>🎲 La categoría y palabra se elegirán aleatoriamente al empezar.</strong>
+          <strong>🎲 Se elegirán aleatoriamente: 1 de 12 categorías + 1 de 35 palabras por categoría</strong>
         `,
         style: 'margin-top: 12px;'
       });
@@ -1290,10 +1332,6 @@
       return card;
     }
   };
-
-  // ========
-  // Inicio
-  // ========
 
   function init() {
     Storage.load();
